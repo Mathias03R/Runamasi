@@ -1,0 +1,77 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { signUpFull } from '@/lib/auth'
+import { supabase } from '@/lib/supabaseClient'
+
+export default function Register() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [district, setDistrict] = useState('')
+  const [role, setRole] = useState<'client' | 'worker'>('client')
+
+  const [services, setServices] = useState<any[]>([])
+  const [serviceId, setServiceId] = useState('')
+  const [description, setDescription] = useState('')
+  const [phone, setPhone] = useState('')
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      const { data } = await supabase.from('services').select('*')
+      setServices(data || [])
+    }
+
+    fetchServices()
+  }, [])
+
+  const handleSubmit = async () => {
+    const { error } = await signUpFull({
+      email,
+      password,
+      name,
+      role,
+      district,
+      serviceId,
+      description,
+      phone,
+    })
+
+    if (error) alert(error.message)
+    else alert('Registrado 🚀')
+  }
+
+  return (
+    <div>
+      <h1>Registro</h1>
+
+      <input placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
+      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+      <input placeholder="Distrito" onChange={(e) => setDistrict(e.target.value)} />
+
+      <select onChange={(e) => setRole(e.target.value as any)}>
+        <option value="client">Cliente</option>
+        <option value="worker">Trabajador</option>
+      </select>
+
+      {role === 'worker' && (
+        <>
+          <select onChange={(e) => setServiceId(e.target.value)}>
+            <option value="">Servicio</option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+
+          <input placeholder="Descripción" onChange={(e) => setDescription(e.target.value)} />
+          <input placeholder="Teléfono" onChange={(e) => setPhone(e.target.value)} />
+        </>
+      )}
+
+      <button onClick={handleSubmit}>Registrarse</button>
+    </div>
+  )
+}
