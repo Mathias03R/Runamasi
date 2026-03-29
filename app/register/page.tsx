@@ -3,33 +3,33 @@
 import { useState, useEffect } from 'react'
 import { signUpFull } from '@/lib/auth'
 import { supabase } from '@/lib/supabaseClient'
+import type { District, Role, Service } from '@/lib/types'
 
 export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [district, setDistrict] = useState('')
-  const [role, setRole] = useState<'client' | 'worker'>('client')
+  const [role, setRole] = useState<Role>('client')
 
-  const [services, setServices] = useState<any[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [serviceId, setServiceId] = useState('')
   const [description, setDescription] = useState('')
   const [phone, setPhone] = useState('')
-  const [districts, setDistricts] = useState<any[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
 
   useEffect(() => {
-    const fetchServices = async () => {
-      const { data } = await supabase.from('services').select('*')
-      setServices(data || [])
+    const fetchData = async () => {
+      const [{ data: servicesData }, { data: districtsData }] = await Promise.all([
+        supabase.from('services').select('id, name'),
+        supabase.from('districts').select('id, name'),
+      ])
+
+      setServices((servicesData as Service[]) || [])
+      setDistricts((districtsData as District[]) || [])
     }
 
-    const fetchDistricts = async () => {
-      const { data } = await supabase.from('districts').select('*')
-      setDistricts(data || [])
-    }
-
-    fetchServices()
-    fetchDistricts()
+    fetchData()
   }, [])
 
   const handleSubmit = async () => {
@@ -68,7 +68,7 @@ export default function Register() {
         ))}
       </select>
 
-      <select onChange={(e) => setRole(e.target.value as any)}>
+      <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
         <option value="client">Cliente</option>
         <option value="worker">Trabajador</option>
       </select>

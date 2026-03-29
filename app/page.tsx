@@ -4,57 +4,73 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import WorkerCard from '@/components/WorkerCard'
+import type { District, MatchResponse } from '@/lib/types'
 
 export default function Home() {
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] | null>(null)
   const [query, setQuery] = useState('')
   const [district, setDistrict] = useState('')
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<MatchResponse | null>(null)
   const [loading, setLoading] = useState(false)
-  const [districts, setDistricts] = useState<any[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
 
-  // 🔐 detectar sesión
   useEffect(() => {
-    console.log('Iniciando useEffect de sesión')
-    supabase.auth.getSession()
-      .then(({ data, error }) => {
-        console.log('Sesión detectada:', data.session)
-        if (error) console.error('Error al obtener sesión:', error)
-        setSession(data.session)
-      })
+    const loadSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (error) {
+        setSession(null)
+        return
+      }
+      setSession(data.session)
+    }
+
+    loadSession()
   }, [])
 
   useEffect(() => {
-    console.log('Iniciando useEffect de distritos')
-    supabase
-      .from('districts')
-      .select('*')
-      .then(({ data, error }) => {
-        console.log('Distritos obtenidos de Supabase:', data)
-        if (error) console.error('Error al obtener distritos:', error)
-        setDistricts(data || [])
-      })
-      
+    const loadDistricts = async () => {
+      const { data, error } = await supabase
+        .from('districts')
+        .select('id, name')
+
+      if (error) {
+        setDistricts([])
+        return
+      }
+
+      setDistricts((data as District[]) || [])
+    }
+
+    loadDistricts()
   }, [])
+
   const handleSearch = async () => {
     setLoading(true)
-    console.log('Iniciando búsqueda con query:', query, 'y distrito:', district)
 
-    const res = await fetch('/api/match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, district }),
-    })
+    try {
+      const res = await fetch('/api/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, district }),
+      })
 
-    const data = await res.json()
-    setResult(data)
+      const data: MatchResponse = await res.json()
 
-    setLoading(false)
+      if (!res.ok) {
+        setResult({ error: data.error || 'No se pudo completar la búsqueda' })
+        return
+      }
+
+      setResult(data)
+    } catch {
+      setResult({ error: 'Error de red. Intenta nuevamente.' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <main style={{ padding: 20 }}>
-      {/* 🔝 HEADER */}
       <header style={{ display: 'flex', justifyContent: 'space-between' }}>
         <h1>Runamasi 🛠️</h1>
 
@@ -68,7 +84,6 @@ export default function Home() {
         )}
       </header>
 
-      {/* 🔍 BUSCADOR */}
       <section style={{ marginTop: 30 }}>
         <h2>¿Qué necesitas?</h2>
 
@@ -90,20 +105,17 @@ export default function Home() {
           ))}
         </select>
 
-        <button onClick={handleSearch}>
+        <button onClick={handleSearch} disabled={loading}>
           Buscar
         </button>
       </section>
 
-      {/* ⏳ LOADING */}
       {loading && <p>Buscando trabajadores...</p>}
 
-      {/* 🎯 RESULTADOS */}
       {result && !result.error && (
         <section style={{ marginTop: 30 }}>
           <h2>Servicio detectado: {result.detectedService}</h2>
 
-          {/* 🏆 MEJOR */}
           {result.best && (
             <>
               <h3>Mejor opción</h3>
@@ -111,22 +123,20 @@ export default function Home() {
             </>
           )}
 
-          {/* 🔁 ALTERNATIVAS */}
           <h3>Otras opciones ({result.alternatives?.length || 0})</h3>
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
             gap: 15,
-            marginTop: 15
+            marginTop: 15,
           }}>
-            {result.alternatives?.map((w: any) => (
-              <WorkerCard key={w.id} worker={w} />
+            {result.alternatives?.map((worker) => (
+              <WorkerCard key={worker.id} worker={worker} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ❌ ERROR */}
       {result?.error && <p>{result.error}</p>}
     </main>
   )
