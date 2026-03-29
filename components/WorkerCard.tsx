@@ -1,14 +1,20 @@
 'use client'
 
-function renderStars(rating: number = 0) {
+import type { Worker } from '@/lib/types'
+
+interface WorkerCardProps {
+  worker: Worker
+  highlight?: boolean
+}
+
+function renderStars(rating = 0) {
   const fullStars = Math.round(rating)
   return '⭐'.repeat(fullStars) + '☆'.repeat(5 - fullStars)
 }
 
-export default function WorkerCard({ worker, highlight = false }: any) {
+export default function WorkerCard({ worker, highlight = false }: WorkerCardProps) {
   const rating = worker.rating || 0
   const reviewsCount = worker.reviews?.[0]?.count || 0
-  console.log(worker)
 
   return (
     <div
@@ -24,17 +30,14 @@ export default function WorkerCard({ worker, highlight = false }: any) {
 
       <p><strong>{worker.services?.name}</strong></p>
 
-      {/* 📍 DISTRITO */}
       <p>📍 {worker.districts?.name || 'Sin distrito'}</p>
 
       <p>{worker.description}</p>
 
-      {/* ⭐ RATING */}
       <p>
         {renderStars(rating)} ({rating.toFixed(1)})
       </p>
 
-      {/* 📝 REVIEWS */}
       <p style={{ fontSize: 12, color: '#666' }}>
         {reviewsCount} reseñas
       </p>
