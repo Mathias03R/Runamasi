@@ -16,9 +16,6 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
-    console.log('Query recibida:', query)
-    console.log('Distrito recibido:', district)
-
     // 🧠 1. Detectar servicio con IA
     const detectedService = await detectServiceAI(query)
 
@@ -53,8 +50,6 @@ export async function POST(req: Request) {
       return Response.json({
         error: 'Distrito no encontrado',
       })
-    }else{
-      console.log('Distrito encontrado:', districtData.name)
     }
 
     // 🟢 4. Buscar workers en distrito exacto
@@ -119,7 +114,7 @@ export async function POST(req: Request) {
       total: sorted.length,
     })
 
-  } catch (err) {
+  } catch {
     return Response.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
