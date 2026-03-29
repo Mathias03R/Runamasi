@@ -15,6 +15,7 @@ export default function Register() {
   const [serviceId, setServiceId] = useState('')
   const [description, setDescription] = useState('')
   const [phone, setPhone] = useState('')
+  const [districts, setDistricts] = useState<any[]>([])
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -22,7 +23,13 @@ export default function Register() {
       setServices(data || [])
     }
 
+    const fetchDistricts = async () => {
+      const { data } = await supabase.from('districts').select('*')
+      setDistricts(data || [])
+    }
+
     fetchServices()
+    fetchDistricts()
   }, [])
 
   const handleSubmit = async () => {
@@ -48,7 +55,18 @@ export default function Register() {
       <input placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
       <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
       <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <input placeholder="Distrito" onChange={(e) => setDistrict(e.target.value)} />
+
+      <select
+        value={district}
+        onChange={(e) => setDistrict(e.target.value)}
+      >
+        <option value="">Selecciona distrito</option>
+        {districts.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
 
       <select onChange={(e) => setRole(e.target.value as any)}>
         <option value="client">Cliente</option>

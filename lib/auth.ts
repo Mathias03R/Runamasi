@@ -1,8 +1,11 @@
 import { supabase } from './supabaseClient'
 
+// @/lib/auth.ts
+
 export async function signUpFull(dataForm: any) {
   const { email, password, name, role, district } = dataForm
 
+  // 1. Registro en Auth
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -12,7 +15,7 @@ export async function signUpFull(dataForm: any) {
 
   const userId = data.user.id
 
-  // profile (puede seguir directo o también mover a API luego)
+  // 2. Insertar perfil (Usando el cliente de Supabase, que funciona en ambos lados)
   await supabase.from('profiles').insert({
     id: userId,
     name,
@@ -20,24 +23,33 @@ export async function signUpFull(dataForm: any) {
     district,
   })
 
-  // worker via API
+  // 3. Lógica del Worker
   if (role === 'worker') {
-    const res = await fetch('/api/workers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: userId,
-        service_id: dataForm.serviceId,
-        description: dataForm.description,
-        district,
-        phone: dataForm.phone,
-      }),
-    })
+    // Verificamos si estamos en el servidor para usar URL absoluta
+    const isServer = typeof window === 'undefined'
+    const baseUrl = isServer ? (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000') : ''
 
-    const result = await res.json()
+    try {
+      const res = await fetch(`${baseUrl}/api/workers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          service_id: dataForm.serviceId,
+          description: dataForm.description,
+          district_id: district,
+          phone: dataForm.phone,
+        }),
+      })
 
-    if (!res.ok) {
-      alert(result.error)
+      if (!res.ok) {
+        const result = await res.json()
+        // Solo mostramos alert si estamos en el navegador
+        if (!isServer) alert(result.error)
+        else console.error("Error en Seed Worker:", result.error)
+      }
+    } catch (fetchError) {
+      console.error("Error crítico en fetch:", fetchError)
     }
   }
 

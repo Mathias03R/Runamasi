@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       user_id,
       service_id,
       description,
-      district,
+      district_id,
       phone,
     } = body
 
@@ -50,13 +50,27 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validar que district_id existe
+    const { data: districtExists } = await supabase
+      .from('districts')
+      .select('id')
+      .eq('id', district_id)
+      .single()
+
+    if (!districtExists) {
+      return Response.json(
+        { error: 'Distrito inválido' },
+        { status: 400 }
+      )
+    }
+
     const { data, error } = await supabase
       .from('workers')
       .insert({
         user_id,
         service_id,
         description,
-        district,
+        district_id,
         phone,
       })
       .select()

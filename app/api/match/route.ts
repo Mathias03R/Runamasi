@@ -10,60 +10,118 @@ export async function POST(req: Request) {
   try {
     const { query, district } = await req.json()
 
-    if (!query) {
-      return Response.json({ error: 'Consulta requerida' }, { status: 400 })
+    if (!query || !district) {
+      return Response.json(
+        { error: 'query y district son requeridos' },
+        { status: 400 }
+      )
     }
+    console.log('Query recibida:', query)
+    console.log('Distrito recibido:', district)
 
-    // 🧠 detectar servicio automáticamente
+    // 🧠 1. Detectar servicio con IA
     const detectedService = await detectServiceAI(query)
 
     if (!detectedService) {
       return Response.json({
-        error: 'No se pudo identificar el servicio'
+        error: 'No se pudo detectar el servicio',
       })
     }
 
-    // 🔎 buscar en DB
-    const { data: serviceData } = await supabase
-      .from('services')
-      .select('*')
-      .ilike('name', `%${detectedService}%`)
-      .single()
+    // 🔎 2. Buscar service_id
+    const { data: serviceData, error: serviceError } =
+      await supabase
+        .from('services')
+        .select('*')
+        .ilike('name', `%${detectedService}%`)
+        .single()
 
-    if (!serviceData) {
-      return Response.json({ error: 'Servicio no encontrado' })
+    if (serviceError || !serviceData) {
+      return Response.json({
+        error: 'Servicio no encontrado',
+      })
     }
 
-    let queryBuilder = supabase
+    // 📍 3. Obtener distrito
+    const { data: districtData } = await supabase
+      .from('districts')
+      .select('*')
+      .eq('id', district)
+      .single()
+
+    if (!districtData) {
+      return Response.json({
+        error: 'Distrito no encontrado',
+      })
+    }else{
+      console.log('Distrito encontrado:', districtData.name)
+    }
+
+    // 🟢 4. Buscar workers en distrito exacto
+    const { data: exactWorkers } = await supabase
       .from('workers')
       .select(`
         *,
         profiles(name),
-        services(name)
+        services(name),
+        districts(name),
+        reviews(count)
       `)
       .eq('service_id', serviceData.id)
+      .eq('district_id', districtData.id)
 
-    if (district) {
-      queryBuilder = queryBuilder.eq('district', district)
+    let workers = exactWorkers || []
+
+    // 🟡 5. Si hay pocos → buscar vecinos
+    if (workers.length < 5) {
+      const { data: neighbors } = await supabase
+        .from('district_neighbors')
+        .select('neighbor_id')
+        .eq('district_id', districtData.id)
+
+      const neighborIds = neighbors?.map(n => n.neighbor_id) || []
+
+      const { data: neighborWorkers } = await supabase
+        .from('workers')
+        .select(`
+          *,
+          profiles(name),
+          services(name),
+          districts(name),
+          reviews(count)
+        `)
+        .eq('service_id', serviceData.id)
+        .in('district_id', neighborIds)
+
+      // 🔥 IMPORTANTE: combinar, no reemplazar
+      workers = [...workers, ...(neighborWorkers || [])]
     }
+    
 
-    const { data: workers } = await queryBuilder
-
-    if (!workers || workers.length === 0) {
+    if (workers.length === 0) {
       return Response.json({
-        message: 'No hay trabajadores disponibles'
+        detectedService,
+        message: 'No hay trabajadores disponibles',
       })
     }
 
-    return Response.json({
-      detectedService,
-      best: workers[0],
-      alternatives: workers.slice(1, 3)
+    // 🏆 6. Ranking (rating primero)
+    const sorted = workers.sort((a, b) => {
+      return (b.rating || 0) - (a.rating || 0)
     })
 
-  } catch {
+    const best = sorted[0]
+
+    return Response.json({
+      detectedService,
+      best,
+      alternatives: sorted.slice(1, 10),
+      total: sorted.length,
+    })
+
+  } catch (err) {
     return Response.json(
-      { error: 'Error interno' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
