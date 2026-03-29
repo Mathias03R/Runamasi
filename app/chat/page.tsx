@@ -1,25 +1,46 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import { signOut } from '@/lib/auth'
 import WorkerCard from '@/components/WorkerCard'
-import type { District, MatchResponse } from '@/lib/types'
+import type { District, MatchResponse, Profile } from '@/lib/types'
 
 export default function ChatPage() {
   const router = useRouter()
   const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [query, setQuery] = useState('')
   const [district, setDistrict] = useState('')
   const [result, setResult] = useState<MatchResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [districts, setDistricts] = useState<District[]>([])
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const initial = useMemo(() => {
+    const letter = profile?.name?.trim()?.charAt(0) || session?.user?.email?.charAt(0) || 'U'
+    return letter.toUpperCase()
+  }, [profile?.name, session?.user?.email])
 
   useEffect(() => {
-    const loadSession = async () => {
+    const loadSessionAndProfile = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session)
+
+      if (!data.session?.user?.id) {
+        setProfile(null)
+        return
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, name, role, district')
+        .eq('id', data.session.user.id)
+        .single()
+
+      setProfile((profileData as Profile) || null)
     }
 
     const loadDistricts = async () => {
@@ -27,7 +48,7 @@ export default function ChatPage() {
       setDistricts((data as District[]) || [])
     }
 
-    loadSession()
+    loadSessionAndProfile()
     loadDistricts()
   }, [])
 
@@ -62,6 +83,12 @@ export default function ChatPage() {
     }
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+    setMenuOpen(false)
+    router.push('/')
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <div className="mx-auto w-full max-w-5xl">
@@ -77,7 +104,33 @@ export default function ChatPage() {
               <Link href="/register" className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-300">Registrarse</Link>
             </div>
           ) : (
-            <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-sm text-emerald-300">Sesión iniciada</span>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-sm font-bold text-slate-900"
+                aria-label="Abrir menú de perfil"
+              >
+                {initial}
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-white/10 bg-slate-900 p-2 shadow-lg">
+                  <Link
+                    href="/me"
+                    className="block rounded-lg px-3 py-2 text-sm hover:bg-white/10"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Ver mi perfil
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-rose-300 hover:bg-rose-400/10"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </header>
 

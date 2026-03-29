@@ -14,6 +14,13 @@ export interface ProfileSummary {
   name: string
 }
 
+export interface Profile {
+  id: string
+  name: string
+  role: Role
+  district: string
+}
+
 export interface ReviewCount {
   count: number
 }
@@ -22,7 +29,7 @@ export interface WorkerReview {
   id: string
   rating: number
   comment: string | null
-  client_id: string | null
+  user_id: string | null
   created_at: string
 }
 

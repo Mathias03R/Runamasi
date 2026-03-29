@@ -27,11 +27,15 @@ export async function GET(_req: Request, context: Params) {
     return Response.json({ error: 'Trabajador no encontrado' }, { status: 404 })
   }
 
-  const { data: reviews } = await supabase
+  const { data: reviews , error: reviewsError } = await supabase
     .from('reviews')
-    .select('id, rating, comment, client_id, created_at')
+    .select('id, worker_id, user_id, rating, comment, created_at, updated_at')
     .eq('worker_id', id)
     .order('created_at', { ascending: false })
+
+  if (reviewsError) {
+    return Response.json({ error: `No se pudieron cargar las reseñas: ${reviewsError.message}` }, { status: 500 })
+  }
 
   return Response.json({
     worker,
