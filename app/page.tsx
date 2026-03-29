@@ -1,133 +1,32 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
-import WorkerCard from '@/components/WorkerCard'
 
-export default function Home() {
-  const [session, setSession] = useState<any>(null)
-  const [query, setQuery] = useState('')
-  const [district, setDistrict] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [districts, setDistricts] = useState<any[]>([])
-
-  // 🔐 detectar sesión
-  useEffect(() => {
-    console.log('Iniciando useEffect de sesión')
-    supabase.auth.getSession()
-      .then(({ data, error }) => {
-        console.log('Sesión detectada:', data.session)
-        if (error) console.error('Error al obtener sesión:', error)
-        setSession(data.session)
-      })
-  }, [])
-
-  useEffect(() => {
-    console.log('Iniciando useEffect de distritos')
-    supabase
-      .from('districts')
-      .select('*')
-      .then(({ data, error }) => {
-        console.log('Distritos obtenidos de Supabase:', data)
-        if (error) console.error('Error al obtener distritos:', error)
-        setDistricts(data || [])
-      })
-      
-  }, [])
-  const handleSearch = async () => {
-    setLoading(true)
-    console.log('Iniciando búsqueda con query:', query, 'y distrito:', district)
-
-    const res = await fetch('/api/match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, district }),
-    })
-
-    const data = await res.json()
-    setResult(data)
-
-    setLoading(false)
-  }
-
+export default function LandingPage() {
   return (
-    <main style={{ padding: 20 }}>
-      {/* 🔝 HEADER */}
-      <header style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h1>Runamasi 🛠️</h1>
+    <main className="min-h-screen bg-slate-950 text-white px-6 py-14">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center text-center">
+        <span className="mb-4 rounded-full border border-white/20 px-4 py-1 text-sm text-slate-200">
+          Runamasi · Hackathon Build
+        </span>
 
-        {!session ? (
-          <div>
-            <Link href="/login">Login</Link>{' '}
-            <Link href="/register">Register</Link>
-          </div>
-        ) : (
-          <p>Sesión iniciada ✅</p>
-        )}
-      </header>
+        <h1 className="text-4xl font-bold leading-tight md:text-6xl">
+          Encuentra al trabajador ideal para resolver problemas de tu hogar
+        </h1>
 
-      {/* 🔍 BUSCADOR */}
-      <section style={{ marginTop: 30 }}>
-        <h2>¿Qué necesitas?</h2>
+        <p className="mt-6 max-w-2xl text-base text-slate-300 md:text-lg">
+          Describe lo que necesitas, selecciona tu distrito de Lima y te mostraremos los mejores perfiles
+          según servicio, cercanía y rating.
+        </p>
 
-        <input
-          placeholder="Ej: se rompió mi caño"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-
-        <select
-          value={district}
-          onChange={(e) => setDistrict(e.target.value)}
-        >
-          <option value="">Selecciona distrito</option>
-          {districts.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        <button onClick={handleSearch}>
-          Buscar
-        </button>
-      </section>
-
-      {/* ⏳ LOADING */}
-      {loading && <p>Buscando trabajadores...</p>}
-
-      {/* 🎯 RESULTADOS */}
-      {result && !result.error && (
-        <section style={{ marginTop: 30 }}>
-          <h2>Servicio detectado: {result.detectedService}</h2>
-
-          {/* 🏆 MEJOR */}
-          {result.best && (
-            <>
-              <h3>Mejor opción</h3>
-              <WorkerCard worker={result.best} highlight />
-            </>
-          )}
-
-          {/* 🔁 ALTERNATIVAS */}
-          <h3>Otras opciones ({result.alternatives?.length || 0})</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-            gap: 15,
-            marginTop: 15
-          }}>
-            {result.alternatives?.map((w: any) => (
-              <WorkerCard key={w.id} worker={w} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ❌ ERROR */}
-      {result?.error && <p>{result.error}</p>}
+        <div className="mt-10 w-full max-w-2xl rounded-2xl border border-white/10 bg-white/5 p-4 shadow-xl backdrop-blur">
+          <p className="mb-3 text-sm text-slate-300">¿Listo para empezar?</p>
+          <Link
+            href="/chat"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-emerald-300"
+          >
+            Ir al buscador
+          </Link>
+        </div>
+      </div>
     </main>
   )
 }
