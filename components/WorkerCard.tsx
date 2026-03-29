@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { Worker } from '@/lib/types'
 
 interface WorkerCardProps {
@@ -43,6 +44,11 @@ export default function WorkerCard({ worker, highlight = false }: WorkerCardProp
       </p>
 
       <p>📞 {worker.phone}</p>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+        <Link href={`/workers/${worker.id}`}>Ver perfil</Link>
+        <Link href={`/chat?workerId=${worker.id}`}>Ir al chat</Link>
+      </div>
 
       {highlight && (
         <span style={{ color: 'green', fontWeight: 'bold' }}>

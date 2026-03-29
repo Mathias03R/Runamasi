@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { signUpFull } from '@/lib/auth'
 import { supabase } from '@/lib/supabaseClient'
 import type { District, Role, Service } from '@/lib/types'
+import AppNav from '@/components/AppNav'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -17,6 +19,7 @@ export default function Register() {
   const [description, setDescription] = useState('')
   const [phone, setPhone] = useState('')
   const [districts, setDistricts] = useState<District[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,51 +48,57 @@ export default function Register() {
     })
 
     if (error) alert(error.message)
-    else alert('Registrado 🚀')
+    else {
+      alert('Registrado 🚀')
+      router.push('/login')
+    }
   }
 
   return (
-    <div>
+    <main style={{ padding: 20 }}>
       <h1>Registro</h1>
+      <AppNav />
 
-      <input placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+      <div style={{ marginTop: 20, display: 'grid', gap: 8, maxWidth: 380 }}>
+        <input placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
+        <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
 
-      <select
-        value={district}
-        onChange={(e) => setDistrict(e.target.value)}
-      >
-        <option value="">Selecciona distrito</option>
-        {districts.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.name}
-          </option>
-        ))}
-      </select>
+        <select
+          value={district}
+          onChange={(e) => setDistrict(e.target.value)}
+        >
+          <option value="">Selecciona distrito</option>
+          {districts.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
 
-      <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-        <option value="client">Cliente</option>
-        <option value="worker">Trabajador</option>
-      </select>
+        <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+          <option value="client">Cliente</option>
+          <option value="worker">Trabajador</option>
+        </select>
 
-      {role === 'worker' && (
-        <>
-          <select onChange={(e) => setServiceId(e.target.value)}>
-            <option value="">Servicio</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+        {role === 'worker' && (
+          <>
+            <select onChange={(e) => setServiceId(e.target.value)}>
+              <option value="">Servicio</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
 
-          <input placeholder="Descripción" onChange={(e) => setDescription(e.target.value)} />
-          <input placeholder="Teléfono" onChange={(e) => setPhone(e.target.value)} />
-        </>
-      )}
+            <input placeholder="Descripción" onChange={(e) => setDescription(e.target.value)} />
+            <input placeholder="Teléfono" onChange={(e) => setPhone(e.target.value)} />
+          </>
+        )}
 
-      <button onClick={handleSubmit}>Registrarse</button>
-    </div>
+        <button onClick={handleSubmit}>Registrarse</button>
+      </div>
+    </main>
   )
 }
