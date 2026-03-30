@@ -23,6 +23,7 @@ export default function MyProfilePage() {
 
       if (!sessionData.session?.user?.id) {
         router.push('/login?next=/me')
+        setLoading(false)
         return
       }
 
@@ -47,6 +48,30 @@ export default function MyProfilePage() {
     }
 
     loadMyProfile()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (!currentSession?.user?.id) {
+        router.push('/login?next=/me')
+        setProfile(null)
+        setWorker(null)
+        setLoading(false)
+      }
+    })
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadMyProfile()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [router])
 
   const handleSignOut = async () => {

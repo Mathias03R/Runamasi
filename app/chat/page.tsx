@@ -8,6 +8,8 @@ import { signOut } from '@/lib/auth'
 import WorkerCard from '@/components/WorkerCard'
 import type { District, MatchResponse, Profile } from '@/lib/types'
 
+const SEARCH_STATE_KEY = 'runamasi:chat-search-state'
+
 export default function ChatPage() {
   const router = useRouter()
   const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] | null>(null)
@@ -25,6 +27,23 @@ export default function ChatPage() {
   }, [profile?.name, session?.user?.email])
 
   useEffect(() => {
+    const savedStateRaw = sessionStorage.getItem(SEARCH_STATE_KEY)
+    if (savedStateRaw) {
+      try {
+        const savedState = JSON.parse(savedStateRaw) as {
+          query?: string
+          district?: string
+          result?: MatchResponse | null
+        }
+
+        if (savedState.query) setQuery(savedState.query)
+        if (savedState.district) setDistrict(savedState.district)
+        if (savedState.result) setResult(savedState.result)
+      } catch {
+        sessionStorage.removeItem(SEARCH_STATE_KEY)
+      }
+    }
+
     const loadSessionAndProfile = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session)
@@ -50,7 +69,37 @@ export default function ChatPage() {
 
     loadSessionAndProfile()
     loadDistricts()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+    })
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadSessionAndProfile()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      SEARCH_STATE_KEY,
+      JSON.stringify({
+        query,
+        district,
+        result,
+      }),
+    )
+  }, [district, query, result])
 
   const handleSearch = async () => {
     if (!session) {
@@ -96,6 +145,16 @@ export default function ChatPage() {
           <div>
             <h1 className="text-2xl font-bold">Buscador Runamasi</h1>
             <p className="text-sm text-slate-300">Describe tu problema y encuentra trabajadores cerca de ti.</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+              <Link href="/chat" className="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10">
+                Buscador
+              </Link>
+              {session && (
+                <Link href="/me" className="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10">
+                  Mi perfil
+                </Link>
+              )}
+            </div>
           </div>
 
           {!session ? (
