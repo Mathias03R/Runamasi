@@ -15,7 +15,12 @@ function renderStars(rating = 0) {
 
 export default function WorkerCard({ worker, highlight = false }: WorkerCardProps) {
   const rating = worker.rating || 0
-  const reviewsCount = worker.reviews?.[0]?.count || 0
+  const firstReview = worker.reviews?.[0]
+
+  const reviewsCount =
+    firstReview && 'count' in firstReview
+      ? firstReview.count
+      : 0
 
   return (
     <Link href={`/workers/${worker.id}`} className="block">
