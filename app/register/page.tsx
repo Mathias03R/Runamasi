@@ -62,46 +62,46 @@ export default function Register() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
-      <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-white p-6 shadow-2xl">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-10">
+      <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">Crear cuenta</h1>
         <p className="mt-1 text-sm text-slate-600">Regístrate para poder contactar trabajadores y recibir recomendaciones.</p>
 
         <div className="mt-6 space-y-4">
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500" placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-          <input type="password" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" placeholder="Nombre" onChange={(e) => setName(e.target.value)} />
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+          <input type="password" className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
 
-          <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500">
+          <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500">
             <option value="">Selecciona distrito</option>
             {districts.map((d) => (
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
           </select>
 
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500">
+          <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500">
             <option value="client">Cliente</option>
             <option value="worker">Trabajador</option>
           </select>
 
           {role === 'worker' && (
-            <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <select onChange={(e) => setServiceId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500">
+            <div className="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4">
+              <select onChange={(e) => setServiceId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500">
                 <option value="">Servicio</option>
                 {services.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
 
-              <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500" placeholder="Descripción" onChange={(e) => setDescription(e.target.value)} />
-              <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500" placeholder="Teléfono" onChange={(e) => setPhone(e.target.value)} />
+              <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" placeholder="Descripción" onChange={(e) => setDescription(e.target.value)} />
+              <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500" placeholder="Teléfono" onChange={(e) => setPhone(e.target.value)} />
             </div>
           )}
 
           <button
             onClick={handleSubmit}
             disabled={loading || !email || !password || !name || !district}
-            className="w-full rounded-xl bg-emerald-500 px-4 py-3 font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="w-full rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {loading ? 'Creando cuenta...' : 'Registrarse'}
           </button>
@@ -115,7 +115,7 @@ export default function Register() {
 
         <p className="mt-6 text-sm text-slate-600">
           ¿Ya tienes cuenta?{' '}
-          <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+          <Link href="/login" className="font-semibold text-sky-700 hover:text-sky-800">
             Inicia sesión
           </Link>
         </p>

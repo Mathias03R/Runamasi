@@ -21,7 +21,7 @@ export default function WorkerCard({ worker, highlight = false }: WorkerCardProp
     <Link href={`/workers/${worker.id}`} className="block">
       <article
         className={`rounded-xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-          highlight ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'
+          highlight ? 'border-sky-400 bg-sky-50' : 'border-slate-200 bg-white'
         }`}
       >
         <h3 className="text-lg font-semibold text-slate-900">{worker.profiles?.name}</h3>
@@ -36,7 +36,7 @@ export default function WorkerCard({ worker, highlight = false }: WorkerCardProp
         <p className="text-xs text-slate-500">{reviewsCount} reseñas</p>
         <p className="mt-2 text-sm text-slate-700">📞 {worker.phone}</p>
 
-        {highlight && <span className="mt-2 inline-block text-sm font-semibold text-emerald-700">🟢 Mejor opción</span>}
+        {highlight && <span className="mt-2 inline-block text-sm font-semibold text-sky-700">⭐ Recomendado</span>}
       </article>
     </Link>
   )

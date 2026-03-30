@@ -80,39 +80,39 @@ export default function MyProfilePage() {
   }
 
   if (loading) {
-    return <main className="min-h-screen bg-slate-950 p-8 text-white">Cargando perfil...</main>
+    return <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 p-8 text-slate-800">Cargando perfil...</main>
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
-      <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-6">
+    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-6 py-8 text-slate-800">
+      <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-bold">Mi perfil</h1>
-        <p className="mt-2 text-slate-300">Aquí puedes ver tus datos y gestionar tu sesión.</p>
+        <p className="mt-2 text-slate-600">Aquí puedes ver tus datos y gestionar tu sesión.</p>
 
         {profile ? (
-          <section className="mt-6 space-y-2 rounded-xl border border-white/10 bg-slate-900/30 p-4">
+          <section className="mt-6 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p><span className="font-semibold">Nombre:</span> {profile.name}</p>
             <p><span className="font-semibold">Rol:</span> {profile.role}</p>
             <p><span className="font-semibold">Distrito:</span> {profile.district}</p>
           </section>
         ) : (
-          <p className="mt-6 text-slate-300">No se encontró tu perfil.</p>
+          <p className="mt-6 text-slate-600">No se encontró tu perfil.</p>
         )}
 
         <div className="mt-6 flex flex-wrap gap-3">
           {worker && (
-            <Link href={`/workers/${worker.id}`} className="rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-white hover:bg-emerald-600">
+            <Link href={`/workers/${worker.id}`} className="rounded-lg bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700">
               Ver mi perfil público
             </Link>
           )}
 
-          <Link href="/chat" className="rounded-lg border border-white/20 px-4 py-2 hover:bg-white/10">
+          <Link href="/chat" className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-50">
             Volver al buscador
           </Link>
 
           <button
             onClick={handleSignOut}
-            className="rounded-lg border border-rose-300/50 px-4 py-2 text-rose-300 hover:bg-rose-400/10"
+            className="rounded-lg border border-rose-300 px-4 py-2 text-rose-600 hover:bg-rose-50"
           >
             Cerrar sesión
           </button>
