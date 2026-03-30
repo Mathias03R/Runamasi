@@ -23,6 +23,13 @@ export default function WorkerDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const whatsappLink = worker?.phone
+    ? (() => {
+        const normalizedPhone = worker.phone.replace(/[^\d+]/g, '').replace(/^\+/, '')
+        if (!normalizedPhone) return null
+        return `https://wa.me/+51${normalizedPhone}`
+      })()
+    : null
 
   const isOwner = useMemo(() => {
     return !!worker && !!sessionUserId && worker.user_id === sessionUserId
@@ -152,6 +159,16 @@ export default function WorkerDetailPage() {
             <h2 className="font-semibold">Sobre este trabajador</h2>
             <p className="mt-2 text-slate-600">{worker.description || 'Sin descripción'}</p>
             <p className="mt-2 text-slate-600">📞 {worker.phone || 'Sin teléfono'}</p>
+            {whatsappLink && (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+              >
+                Escribir por WhatsApp
+              </a>
+            )}
           </section>
         )}
 
@@ -163,7 +180,7 @@ export default function WorkerDetailPage() {
             <div className="mt-3 space-y-3">
               {reviews.map((review) => (
                 <article key={review.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="font-semibold">⭐ {review.rating}/5</p>
+                  <p className="font-semibold">{review.reviewer_name || 'Usuario anónimo'} ⭐ {review.rating}/5</p>
                   <p className="mt-1 text-slate-600">{review.comment || 'Sin comentario.'}</p>
                   <p className="mt-2 text-xs text-slate-500">
                     {new Date(review.created_at).toLocaleDateString('es-PE')}

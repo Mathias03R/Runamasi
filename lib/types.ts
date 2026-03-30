@@ -25,12 +25,22 @@ export interface ReviewCount {
   count: number
 }
 
+export interface SupabaseReviewResponse {
+  id: string
+  user_id: string
+  rating: number
+  comment: string | null
+  created_at: string
+  profiles: { name: string | null } | { name: string | null }[] | null
+}
+
 export interface WorkerReview {
   id: string
   rating: number
   comment: string | null
   user_id: string | null
   created_at: string
+  reviewer_name?: string | null
 }
 
 export interface Worker {

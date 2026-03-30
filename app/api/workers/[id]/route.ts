@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { SupabaseReviewResponse, WorkerReview } from '@/lib/types'
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -27,20 +28,31 @@ export async function GET(_req: Request, context: Params) {
     return Response.json({ error: 'Trabajador no encontrado' }, { status: 404 })
   }
 
-  const { data: reviews , error: reviewsError } = await supabase
+  const { data, error: reviewsError } = await supabase
     .from('reviews')
-    .select('id, worker_id, user_id, rating, comment, created_at, updated_at')
+    .select('id, user_id, rating, comment, created_at, profiles(name)')
     .eq('worker_id', id)
     .order('created_at', { ascending: false })
 
-  if (reviewsError) {
-    return Response.json({ error: `No se pudieron cargar las reseñas: ${reviewsError.message}` }, { status: 500 })
-  }
+  // Forzamos el tipo de los datos recuperados de forma segura
+  const reviews = data as SupabaseReviewResponse[] | null
 
-  return Response.json({
-    worker,
-    reviews: reviews || [],
-  })
+  if (reviewsError) {
+    return Response.json({ error: reviewsError.message }, { status: 500 })
+  }
+  
+  const formattedReviews: WorkerReview[] = (reviews || []).map((review) => ({
+    id: review.id,
+    user_id: review.user_id,
+    rating: review.rating,
+    comment: review.comment,
+    created_at: review.created_at,
+    reviewer_name: Array.isArray(review.profiles)
+      ? review.profiles[0]?.name
+      : review.profiles?.name || "Usuario anónimo",
+  }))
+
+  return Response.json({ worker, reviews: formattedReviews })
 }
 
 export async function PATCH(req: Request, context: Params) {
