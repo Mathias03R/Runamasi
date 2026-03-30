@@ -8,6 +8,8 @@ import { signOut } from '@/lib/auth'
 import WorkerCard from '@/components/WorkerCard'
 import type { District, MatchResponse, Profile } from '@/lib/types'
 
+const SEARCH_STATE_KEY = 'runamasi:chat-search-state'
+
 export default function ChatPage() {
   const router = useRouter()
   const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] | null>(null)
@@ -25,6 +27,23 @@ export default function ChatPage() {
   }, [profile?.name, session?.user?.email])
 
   useEffect(() => {
+    const savedStateRaw = sessionStorage.getItem(SEARCH_STATE_KEY)
+    if (savedStateRaw) {
+      try {
+        const savedState = JSON.parse(savedStateRaw) as {
+          query?: string
+          district?: string
+          result?: MatchResponse | null
+        }
+
+        if (savedState.query) setQuery(savedState.query)
+        if (savedState.district) setDistrict(savedState.district)
+        if (savedState.result) setResult(savedState.result)
+      } catch {
+        sessionStorage.removeItem(SEARCH_STATE_KEY)
+      }
+    }
+
     const loadSessionAndProfile = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session)
@@ -50,7 +69,37 @@ export default function ChatPage() {
 
     loadSessionAndProfile()
     loadDistricts()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+    })
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadSessionAndProfile()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      SEARCH_STATE_KEY,
+      JSON.stringify({
+        query,
+        district,
+        result,
+      }),
+    )
+  }, [district, query, result])
 
   const handleSearch = async () => {
     if (!session) {
@@ -90,41 +139,51 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
+    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-6 py-8 text-slate-800">
       <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-8 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 md:flex-row md:items-center md:justify-between">
+        <header className="mb-8 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Buscador Runamasi</h1>
-            <p className="text-sm text-slate-300">Describe tu problema y encuentra trabajadores cerca de ti.</p>
+            <p className="text-sm text-slate-600">Describe tu problema y encuentra trabajadores cerca de ti.</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+              <Link href="/chat" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
+                Buscador
+              </Link>
+              {session && (
+                <Link href="/me" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
+                  Mi perfil
+                </Link>
+              )}
+            </div>
           </div>
 
           {!session ? (
             <div className="flex gap-3">
-              <Link href="/login?next=/chat" className="rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10">Iniciar sesión</Link>
-              <Link href="/register" className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-300">Registrarse</Link>
+              <Link href="/login?next=/chat" className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Iniciar sesión</Link>
+              <Link href="/register" className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Registrarse</Link>
             </div>
           ) : (
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-sm font-bold text-slate-900"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-sm font-bold text-white"
                 aria-label="Abrir menú de perfil"
               >
                 {initial}
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-white/10 bg-slate-900 p-2 shadow-lg">
+                <div className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
                   <Link
                     href="/me"
-                    className="block rounded-lg px-3 py-2 text-sm hover:bg-white/10"
+                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
                     onClick={() => setMenuOpen(false)}
                   >
                     Ver mi perfil
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-rose-300 hover:bg-rose-400/10"
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
                   >
                     Cerrar sesión
                   </button>
@@ -135,15 +194,15 @@ export default function ChatPage() {
         </header>
 
         {!session && (
-          <p className="mb-4 rounded-lg border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm text-amber-200">
+          <p className="mb-4 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             Debes iniciar sesión antes de realizar una búsqueda.
           </p>
         )}
 
-        <section className="rounded-2xl border border-white/10 bg-white p-4 text-slate-900 shadow-xl md:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-sm md:p-6">
           <label className="mb-2 block text-sm font-medium">¿Qué necesitas?</label>
           <textarea
-            className="mb-4 min-h-28 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-emerald-500"
+            className="mb-4 min-h-28 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500"
             placeholder="Ej: Se malogró mi terma y no calienta el agua"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -153,7 +212,7 @@ export default function ChatPage() {
           <select
             value={district}
             onChange={(e) => setDistrict(e.target.value)}
-            className="mb-4 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-emerald-500"
+            className="mb-4 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-sky-500"
           >
             <option value="">Selecciona distrito</option>
             {districts.map((d) => (
@@ -164,7 +223,7 @@ export default function ChatPage() {
           <button
             onClick={handleSearch}
             disabled={loading || !query.trim() || !district}
-            className="rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {loading ? 'Buscando...' : 'Buscar trabajadores'}
           </button>
@@ -191,7 +250,7 @@ export default function ChatPage() {
         )}
 
         {result?.error && (
-          <p className="mt-6 rounded-lg border border-rose-400/40 bg-rose-300/10 px-4 py-3 text-rose-200">
+          <p className="mt-6 rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-rose-700">
             {result.error}
           </p>
         )}
