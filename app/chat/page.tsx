@@ -26,6 +26,8 @@ export default function ChatPage() {
     return letter.toUpperCase()
   }, [profile?.name, session?.user?.email])
 
+  const canAccessOwnProfile = profile?.role === 'worker'
+
   useEffect(() => {
     const savedStateRaw = sessionStorage.getItem(SEARCH_STATE_KEY)
     if (savedStateRaw) {
@@ -149,7 +151,7 @@ export default function ChatPage() {
               <Link href="/chat" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
                 Buscador
               </Link>
-              {session && (
+              {session && canAccessOwnProfile && (
                 <Link href="/me" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
                   Mi perfil
                 </Link>
@@ -174,13 +176,15 @@ export default function ChatPage() {
 
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
-                  <Link
-                    href="/me"
-                    className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Ver mi perfil
-                  </Link>
+                  {canAccessOwnProfile && (
+                    <Link
+                      href="/me"
+                      className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Ver mi perfil
+                    </Link>
+                  )}
                   <button
                     onClick={handleSignOut}
                     className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"

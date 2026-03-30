@@ -35,6 +35,12 @@ export default function MyProfilePage() {
         .eq('id', userId)
         .single()
 
+      if (profileData && profileData.role !== 'worker') {
+        router.push('/chat')
+        setLoading(false)
+        return
+      }
+
       setProfile((profileData as Profile) || null)
 
       const { data: workerData } = await supabase

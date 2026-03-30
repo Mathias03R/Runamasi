@@ -15,6 +15,7 @@ interface WorkerDetailResponse {
 export default function WorkerDetailPage() {
   const params = useParams<{ id: string }>()
   const [sessionUserId, setSessionUserId] = useState<string | null>(null)
+  const [sessionUserRole, setSessionUserRole] = useState<string | null>(null)
   const [worker, setWorker] = useState<Worker | null>(null)
   const [reviews, setReviews] = useState<WorkerReview[]>([])
   const [description, setDescription] = useState('')
@@ -27,10 +28,26 @@ export default function WorkerDetailPage() {
     return !!worker && !!sessionUserId && worker.user_id === sessionUserId
   }, [worker, sessionUserId])
 
+  const canAccessOwnProfile = sessionUserRole === 'worker'
+
   useEffect(() => {
     const loadSession = async () => {
       const { data } = await supabase.auth.getSession()
-      setSessionUserId(data.session?.user?.id || null)
+      const userId = data.session?.user?.id || null
+      setSessionUserId(userId)
+
+      if (!userId) {
+        setSessionUserRole(null)
+        return
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+
+      setSessionUserRole(profileData?.role || null)
     }
 
     const loadWorker = async () => {
@@ -98,7 +115,7 @@ export default function WorkerDetailPage() {
           <Link href="/chat" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
             ← Volver al buscador
           </Link>
-          {sessionUserId && (
+          {sessionUserId && canAccessOwnProfile && (
             <Link href="/me" className="rounded-lg border border-slate-300 px-3 py-1 hover:bg-slate-50">
               Mi perfil
             </Link>
