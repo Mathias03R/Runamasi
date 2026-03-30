@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import type { Worker, WorkerReview } from '@/lib/types'
@@ -93,6 +94,17 @@ export default function WorkerDetailPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <div className="mx-auto w-full max-w-4xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="mb-4 flex flex-wrap gap-2 text-sm">
+          <Link href="/chat" className="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10">
+            ← Volver al buscador
+          </Link>
+          {sessionUserId && (
+            <Link href="/me" className="rounded-lg border border-white/20 px-3 py-1 hover:bg-white/10">
+              Mi perfil
+            </Link>
+          )}
+        </div>
+
         <h1 className="text-3xl font-bold">{worker.profiles?.name}</h1>
         <p className="mt-1 text-slate-300">{worker.services?.name}</p>
         <p className="mt-1 text-slate-300">📍 {worker.districts?.name || 'Sin distrito'}</p>
