@@ -22,6 +22,9 @@ export default function WorkerDetailPage() {
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
   const [message, setMessage] = useState('')
   const whatsappLink = worker?.phone
     ? (() => {
@@ -36,6 +39,8 @@ export default function WorkerDetailPage() {
   }, [worker, sessionUserId])
 
   const canAccessOwnProfile = sessionUserRole === 'worker'
+  const canLeaveReview = !!sessionUserId && !isOwner
+  const hasReviewed = !!sessionUserId && reviews.some((review) => review.user_id === sessionUserId)
 
   useEffect(() => {
     const loadSession = async () => {
@@ -107,6 +112,37 @@ export default function WorkerDetailPage() {
     setSaving(false)
   }
 
+  const handleCreateReview = async () => {
+    if (!worker || !sessionUserId || hasReviewed) return
+
+    setSubmittingReview(true)
+    setMessage('')
+
+    const res = await fetch(`/api/workers/${worker.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: sessionUserId,
+        rating: reviewRating,
+        comment: reviewComment,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok || !data.review) {
+      setMessage(data.error || 'No se pudo guardar la reseña')
+      setSubmittingReview(false)
+      return
+    }
+
+    setReviews((prev) => [data.review, ...prev])
+    setReviewRating(5)
+    setReviewComment('')
+    setMessage('¡Gracias! Tu reseña fue registrada.')
+    setSubmittingReview(false)
+  }
+
   if (loading) {
     return <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 p-8 text-slate-800">Cargando perfil...</main>
   }
@@ -174,6 +210,49 @@ export default function WorkerDetailPage() {
 
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Reviews</h2>
+          {!sessionUserId ? (
+            <p className="mt-2 text-sm text-slate-600">Inicia sesión para dejar una reseña.</p>
+          ) : canLeaveReview ? (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4">
+              <h3 className="font-semibold">Deja tu reseña</h3>
+              {hasReviewed ? (
+                <p className="mt-2 text-sm text-slate-600">Ya dejaste una reseña para este trabajador.</p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Calificación
+                    <select
+                      className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2"
+                      value={reviewRating}
+                      onChange={(e) => setReviewRating(Number(e.target.value))}
+                    >
+                      {[5, 4, 3, 2, 1].map((value) => (
+                        <option key={value} value={value}>
+                          {value} estrella{value > 1 ? 's' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm font-medium text-slate-700">
+                    Comentario
+                    <textarea
+                      className="mt-1 min-h-20 w-full rounded-lg border border-slate-300 bg-white p-3"
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Comparte tu experiencia (opcional)"
+                    />
+                  </label>
+                  <button
+                    onClick={handleCreateReview}
+                    disabled={submittingReview}
+                    className="rounded-lg bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700 disabled:bg-slate-400"
+                  >
+                    {submittingReview ? 'Enviando...' : 'Publicar reseña'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
           {reviews.length === 0 ? (
             <p className="mt-2 text-slate-600">Este trabajador todavía no tiene reseñas.</p>
           ) : (
